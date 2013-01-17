@@ -25,6 +25,13 @@ LaserCommand.prototype.init = function(canvasName){
     this.particleEmitRate = 100;
     this.totalParticles = 50;
 
+    $(document).mousemove(function(e) {
+        var x = e.pageX;
+        var y = e.pageY;
+
+        console.log("x: " + x + ", y: " + y);
+    }).bind(this);
+
 
     this.initScene(canvasName);
     this.initCamera(scn);
