@@ -3,6 +3,7 @@ var RECT_COUNT = 100;
 
 $(document).ready(function(){
     new LaserCommand("canvas");
+    websocket_init();
 })
 
 function LaserCommand(canvasName) {
@@ -22,11 +23,12 @@ LaserCommand.prototype.init = function(canvas){
     this.mouse = {};
     this.numParticles = 200;
     this.ctx = canvas.getContext("2d");
-
+    
+    /*
     $(document).mousemove(function(e) {
-        this.mouse.x = e.pageX;
-        this.mouse.y = e.pageY;
-    }.bind(this));
+        POINTS.x = e.pageX;
+        POINTS.y = e.pageY;
+    }.bind(this));*/
 
     this.initParticles();
     this.initRectangles();
@@ -62,8 +64,8 @@ LaserCommand.prototype.draw = function(){
     // destroy any rectangles hit by the cursor, and draw the remaining
     this.ctx.fillStyle = "white";
     for (var i = 0; i < this.rects.length; i++) {
-        if (this.mouse.x > this.rects[i].x && this.mouse.x < this.rects[i].x + RECT_SIZE) {
-            if (this.mouse.y > this.rects[i].y && this.mouse.y < this.rects[i].y + RECT_SIZE) {
+        if (POINTS.x > this.rects[i].x && POINTS.x < this.rects[i].x + RECT_SIZE) {
+            if (POINTS.y > this.rects[i].y && POINTS.y < this.rects[i].y + RECT_SIZE) {
                 this.rects.splice(i, 1);
             }
         }
@@ -114,8 +116,8 @@ function particle(context){
     this.speed = {x: -2.5+Math.random()*5, y: -15+Math.random()*10};
 
     //Now the flame follows the mouse coordinates
-    if(context.mouse.x && context.mouse.y){
-        this.location = {x: context.mouse.x, y: context.mouse.y};
+    if(POINTS.x && POINTS.y){
+        this.location = {x: POINTS.x, y: POINTS.y};
     } else {
         this.location = {x: context.w/2, y: context.h/2};
     }

@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
+import json
 c = cv2.VideoCapture(0)
 
 
 #0, 0, 40
 #20, 20, 255
+
 
 
 #Smallest Projector-off thresholds
@@ -19,17 +21,17 @@ R_MAX = np.array([127, 255, 255],np.uint8)
 
 B_MIN = np.array([167, 50, 120],np.uint8)
 B_MAX = np.array([178, 255, 255],np.uint8)
-G_MIN = np.array([51, 50, 50],np.uint8)
-G_MAX = np.array([69, 255, 255],np.uint8)
-#R_MIN = np.array([119, 25, 50],np.uint8)
-#R_MAX = np.array([122, 255, 255],np.uint8)
-R_MIN = np.array([119, 35, 50],np.uint8)
-R_MAX = np.array([122, 55, 70],np.uint8)
+G_MIN = np.array([50, 50, 50],np.uint8)
+G_MAX = np.array([70, 255, 255],np.uint8)
+R_MIN = np.array([110, 55, 70],np.uint8) #Increase sat to remove blue halo
+R_MAX = np.array([120, 255, 255],np.uint8)
 
             
 CANVAS_POINTS = np.array([[0,0],[0,1023],[1023,0],[1023,1023]],np.float32)
 def getProjectorMaskAndTrafo(frame_HSV):
-    frame_threshed = cv2.inRange(frame_HSV, np.array([0, 0, 120],np.uint8), np.array([180, 255, 255],np.uint8))
+    frame_threshed = cv2.inRange(frame_HSV, 
+                                 np.array([0, 0, 100],np.uint8), 
+                                 np.array([180, 255, 255],np.uint8))
     
     # find contours in the threshold image
     contours,hierarchy = cv2.findContours(frame_threshed,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -51,7 +53,7 @@ def getProjectorMaskAndTrafo(frame_HSV):
         test = np.zeros(frame_threshed.shape, np.uint8)
         print approxCurve
         cv2.drawContours(test, [approxCurve], 0, color=255, thickness=2)
-        cv2.imshow("poly approx", test)
+        #cv2.imshow("poly approx", test)
         
         #Sort by X coord (ascending) then by Y coord
         if len(approxCurve) != 4:
@@ -72,33 +74,32 @@ def getProjectorMaskAndTrafo(frame_HSV):
 def getColorPoint(frame_HSV, min, max):
     frame_threshed = cv2.inRange(frame_HSV, min, max)
     
-    #cv2.imshow('threshed', frame_threshed)
+    cv2.imshow('threshed', frame_threshed)
     
     # find contours in the threshold image
     contours,hierarchy = cv2.findContours(frame_threshed,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
 
     # finding contour with maximum area and store it as best_cnt
-    max_area = 0
-    best_cnt = None
-    for cnt in contours:
-        area = cv2.contourArea(cnt)
-        if area > max_area:
-            max_area = area
-            best_cnt = cnt
-            
-    if best_cnt is not None:
-        # finding centroids of best_cnt and draw a circle there
-        M = cv2.moments(best_cnt)
+    sorted_cnts = sorted(contours, lambda x, y: cv2.contourArea(x) > cv2.contourArea(y))
+    pts = []
+    for cnt in sorted_cnts:
+        if cv2.contourArea(cnt) < 5:
+            continue
+        M = cv2.moments(cnt)
         cx,cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-        return (cx, cy)
-    else:
-        return None
+        pts.append((cx, cy))
+         
+    
+    return pts
 
 
 T_MIN = R_MIN
 T_MAX = R_MAX
 
 if __name__ == "__main__":
+    main()
+
+def main(callback = None):
     _,f = c.read()
     hsv_img = cv2.cvtColor(f,cv2.COLOR_RGB2HSV)
     (mask, perspective) = getProjectorMaskAndTrafo(hsv_img)
@@ -116,31 +117,40 @@ if __name__ == "__main__":
         g = cv2.blur(f,(3,3))
         
         hsv_img = cv2.cvtColor(g,cv2.COLOR_RGB2HSV)
-        pos = getColorPoint(hsv_img, R_MIN, R_MAX)
-        if pos is not None:
-            (cx, cy) = pos
-            [x,y] = cv2.perspectiveTransform(np.float32([[[cx, cy]]]), perspective)[0][0]
-            cv2.circle(f,pos,5,10,2)
-            cv2.putText(f, "R(%d %d)" % (x, y), 
-                (cx+10, cy), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 255), thickness=1)
-        pos = getColorPoint(hsv_img, G_MIN, G_MAX)
-        if pos is not None:
-            (cx, cy) = pos
-            [x,y] = cv2.perspectiveTransform(np.float32([[[cx, cy]]]), perspective)[0][0]
-            cv2.circle(f,pos,5,10,2)
-            cv2.putText(f, "G(%d %d)" % (x, y), 
-                (cx+10, cy), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 255), thickness=1)
-        pos = getColorPoint(hsv_img, B_MIN, B_MAX)
-        if pos is not None:
-            (cx, cy) = pos
-            [x,y] = cv2.perspectiveTransform(np.float32([[[cx, cy]]]), perspective)[0][0]
-            cv2.circle(f,pos,5,10,2)
-            cv2.putText(f, "B(%d %d)" % (x, y), 
-                (cx+10, cy), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 255), thickness=1)
+        
+        points = {}
+        points['R'] = getColorPoint(hsv_img, R_MIN, R_MAX)
+        points['G'] = getColorPoint(hsv_img, G_MIN, G_MAX)
+        points['B'] = getColorPoint(hsv_img, B_MIN, B_MAX)
+        for k, v in points.iteritems():
+            for i in xrange(min(1, len(v))):
+                (cx, cy) = v[i]
+                [x,y] = cv2.perspectiveTransform(np.float32([[[cx, cy]]]), perspective)[0][0]
+                cv2.circle(f,(cx, cy),5,10,2)
+                cv2.putText(f, "%s(%d %d)" % (k, x, y), 
+                    (cx+10, cy), cv2.FONT_HERSHEY_PLAIN, fontScale=1, color=(255, 255, 255), thickness=1)
+            
         cv2.imshow('tracked', f)
+        
+        if callback:
+            callback(points)
         
         #cv2.imshow('e2',frame_threshed)
         #cv2.imshow('e2', f)
         if cv2.waitKey(5)==27:
             break
+        
     cv2.destroyAllWindows()
+    
+    
+    
+def web_socket_do_extra_handshake(request):
+    pass  # Always accept.
+
+def web_socket_transfer_data(request):
+    #line = request.ws_stream.receive_message()
+    #print line    
+    def sendPoints(points):
+        request.ws_stream.send_message(json.dumps(points))
+        
+    main(sendPoints)

@@ -1,0 +1,110 @@
+<!--
+Copyright 2011, Google Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+    * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+    * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<!--
+A simple console for testing WebSocket server.
+
+Type an address into the top text input and click connect to establish
+WebSocket. Then, type some message into the bottom text input and click send
+to send the message. Received/sent messages and connection state will be shown
+on the middle textarea.
+-->
+
+<html>
+<head>
+<title>WebSocket console</title>
+<script>
+var socket = null;
+WEBSCK_ADDY = "ws://localhost:8000/camtest";
+
+function send(val) {
+  if (!socket) {console.log('Not connected'); return;}
+  socket.send(val);
+  console.log('> ' + val);
+}
+
+function connect() {
+  if ('WebSocket' in window) {
+    socket = new WebSocket(WEBSCK_ADDY);
+  } else if ('MozWebSocket' in window) {
+    socket = new MozWebSocket(WEBSCK_ADDY);
+  } else {
+    return;
+  }
+
+  socket.onopen = function () {
+    console.log('Opened');
+  };
+  socket.onmessage = function (event) {
+    console.log('< ' + event.data);
+  };
+  socket.onerror = function () {
+    console.log('Error');
+  };
+  socket.onclose = function (event) {
+    var logMessage = 'Closed (';
+    if ((arguments.length == 1) && ('CloseEvent' in window) &&
+        (event instanceof CloseEvent)) {
+      logMessage += 'wasClean = ' + event.wasClean;
+      // code and reason are present only for
+      // draft-ietf-hybi-thewebsocketprotocol-06 and later
+      if ('code' in event) {
+        logMessage += ', code = ' + event.code;
+      }
+      if ('reason' in event) {
+        logMessage += ', reason = ' + event.reason;
+      }
+    } else {
+      logMessage += 'CloseEvent is not available';
+    }
+    console.log(logMessage + ')');
+  };
+}
+
+function closeSocket() {
+  if (!socket) {console.log('Not connected'); return;}
+  socket.close();
+}
+
+function init() {
+  if ('MozWebSocket' in window) {
+    console.log('Use MozWebSocket');
+  } else if (!('WebSocket' in window)) {
+    console.log('WebSocket is not available');
+  }
+  connect();
+}
+</script>
+</head>
+<body onload="init()">
+Derp
+</body>
+</html>

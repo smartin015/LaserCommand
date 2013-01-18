@@ -4,7 +4,7 @@ c = cv2.VideoCapture(0)
 _,f = c.read()
 while(1):
     _,f = c.read()
-    cv2.imshow('e2', fgmask)
+    cv2.imshow('e2', f)
     
     if cv2.waitKey(5)==27:
         break
