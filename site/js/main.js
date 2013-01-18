@@ -1,4 +1,6 @@
 var LC;
+var RECT_SIZE = 10;
+var RECT_COUNT = 100;
 
 $(document).ready(function(){
     LC = new LaserCommand("canvas");
@@ -44,7 +46,7 @@ LaserCommand.prototype.initParticles = function(){
 
 LaserCommand.prototype.initRectangles = function() {
     this.rects = [];
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < RECT_COUNT; i++) {
         this.rects.push(new rect());
     }
 }
@@ -65,11 +67,17 @@ LaserCommand.prototype.draw = function(){
     this.ctx.fillRect(0, 0, this.w, this.h);
     this.ctx.globalCompositeOperation = "lighter";
 
+    // destroy any rectangles hit by the cursor, and draw the remaining
     this.ctx.fillStyle = "white";
-    this.ctx.strokeStyle = "white";
     for (var i = 0; i < this.rects.length; i++) {
-        this.ctx.rect(this.rects[i].x, this.rects[i].y, 50, 50);
-        console.log(this.rects[i].x);
+        if (this.mouse.x > this.rects[i].x && this.mouse.x < this.rects[i].x + RECT_SIZE) {
+            if (this.mouse.y > this.rects[i].y && this.mouse.y < this.rects[i].y + RECT_SIZE) {
+                this.rects.splice(i, 1);
+            }
+        }
+    }
+    for (var i = 0; i < this.rects.length; i++) {
+        this.ctx.fillRect(this.rects[i].x, this.rects[i].y, RECT_SIZE, RECT_SIZE);
     }
     
     for(var i = 0; i < this.particles.length; i++){
