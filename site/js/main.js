@@ -1,4 +1,4 @@
-var RECT_SIZE = 10;
+var RECT_SIZE = 15;
 var RECT_COUNT = 100;
 
 $(document).ready(function(){
@@ -62,7 +62,7 @@ LaserCommand.prototype.draw = function(){
     this.ctx.globalCompositeOperation = "lighter";
 
     // destroy any rectangles hit by the cursor, and draw the remaining
-    this.ctx.fillStyle = "white";
+    this.ctx.fillStyle = "#888888";
     for (var i = 0; i < this.rects.length; i++) {
         if (POINTS.x > this.rects[i].x && POINTS.x < this.rects[i].x + RECT_SIZE) {
             if (POINTS.y > this.rects[i].y && POINTS.y < this.rects[i].y + RECT_SIZE) {
@@ -132,6 +132,6 @@ function particle(context){
 
     //colors
     this.r = Math.round(255);
-    this.g = Math.round(255);
-    this.b = Math.round(Math.random()*150);
+    this.g = Math.round(Math.random()*80);
+    this.b = Math.round(0);
 }
