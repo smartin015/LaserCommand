@@ -42,7 +42,17 @@ LaserCommand.prototype.initParticles = function(){
     }
 }
 
-LaserComand.prototype.initRectangles
+LaserCommand.prototype.initRectangles = function() {
+    this.rects = [];
+    for (var i = 0; i < 5; i++) {
+        this.rects.push(new rect());
+    }
+}
+
+function rect() {
+    this.x = Math.random()*canvas.width;
+    this.y = Math.random()*canvas.height;
+}
 
 LaserCommand.prototype.draw = function(){
     //Painting the canvas black
@@ -54,6 +64,13 @@ LaserCommand.prototype.draw = function(){
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.w, this.h);
     this.ctx.globalCompositeOperation = "lighter";
+
+    this.ctx.fillStyle = "white";
+    this.ctx.strokeStyle = "white";
+    for (var i = 0; i < this.rects.length; i++) {
+        this.ctx.rect(this.rects[i].x, this.rects[i].y, 50, 50);
+        console.log(this.rects[i].x);
+    }
     
     for(var i = 0; i < this.particles.length; i++){
         var p = this.particles[i];
