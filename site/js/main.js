@@ -1,9 +1,8 @@
-var LC;
 var RECT_SIZE = 10;
 var RECT_COUNT = 100;
 
 $(document).ready(function(){
-    LC = new LaserCommand("canvas");
+    new LaserCommand("canvas");
 })
 
 function LaserCommand(canvasName) {
@@ -122,7 +121,7 @@ function particle(context){
     }
 
     //radius range = 10-30
-    this.radius = 0+Math.random()*10;
+    this.radius = 0+Math.random()*15;
 
     //life range = 20-30
     this.life = 20+Math.random()*10;
@@ -130,7 +129,7 @@ function particle(context){
     this.remaining_life = this.life;
 
     //colors
-    this.r = Math.round(Math.random()*255);
-    this.g = Math.round(Math.random()*255);
-    this.b = Math.round(Math.random()*255);
+    this.r = Math.round(255);
+    this.g = Math.round(255);
+    this.b = Math.round(Math.random()*150);
 }
