@@ -2,7 +2,7 @@ var RECT_SIZE = 15;
 var RECT_COUNT = 100;
 
 $(document).ready(function(){
-    new LaserCommand("canvas");
+    window.LC = new LaserCommand("canvas");
     websocket_init();
 })
 
@@ -21,26 +21,20 @@ LaserCommand.prototype.resizeCanvas = function(canvas){
 
 LaserCommand.prototype.init = function(canvas){
     this.mouse = {};
+    this.emitters = [];
     this.numParticles = 200;
     this.ctx = canvas.getContext("2d");
-    
-    /*
-    $(document).mousemove(function(e) {
-        POINTS.x = e.pageX;
-        POINTS.y = e.pageY;
-    }.bind(this));*/
 
-    this.initParticles();
     this.initRectangles();
 
-    setInterval(this.draw.bind(this), 0);
+    var fireEmitter = new Emitter(this.w/2, this.h/2, 300, {}, this);
+    this.addEmitter(fireEmitter);
+
+    setInterval(this.draw.bind(this), 30);
 }
 
-LaserCommand.prototype.initParticles = function(){
-    this.particles = [];
-    for(var i = 0; i < this.numParticles; i++){
-        this.particles.push(new particle(this));
-    }
+LaserCommand.prototype.addEmitter = function(emitter){
+    this.emitters.push(emitter);
 }
 
 LaserCommand.prototype.initRectangles = function() {
@@ -73,43 +67,16 @@ LaserCommand.prototype.draw = function(){
     for (var i = 0; i < this.rects.length; i++) {
         this.ctx.fillRect(this.rects[i].x, this.rects[i].y, RECT_SIZE, RECT_SIZE);
     }
-    
-    for(var i = 0; i < this.particles.length; i++){
-        var p = this.particles[i];
-        this.ctx.beginPath();
-        
-        /* changing opacity according to the life (opacity goes to 0 at the end 
-         * of life of a particle
-         */
-        p.opacity = Math.round(p.remaining_life/p.life*100)/100
-        
-        //a gradient instead of white fill
-        var gradient = this.ctx.createRadialGradient(p.location.x, p.location.y, 
-            0, p.location.x, p.location.y, p.radius);
-        gradient.addColorStop(0, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
-        gradient.addColorStop(0.5, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
-        gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.arc(p.location.x, p.location.y, p.radius, Math.PI*2, false);
-        this.ctx.fill();
-        
-        p.remaining_life--;
-        p.radius--;
-        
-        // move the particles
-        p.location.x += p.speed.x;
-        p.location.y += p.speed.y;
-        
-        // regenerate particles
-        if(p.remaining_life < 0 || p.radius < 0){
-            //a brand new particle replacing the dead one
-            this.particles[i] = new particle(this);
+
+    for (var i = 0; i < this.emitters.length; i++){
+        var emitter = this.emitters[i];
+        if(emitter.active){
+            emitter.emit();
         }
     }
 }
 
-function particle(context){
+function particle(x,y){
     // each particle has a speed, life, location, life, colors
 
     //lets change the Y speed to make it look like a flame
@@ -117,9 +84,9 @@ function particle(context){
 
     //Now the flame follows the mouse coordinates
     if(POINTS.x && POINTS.y){
-        this.location = {x: POINTS.x, y: POINTS.y};
+        this.location = {x: x, y: y};
     } else {
-        this.location = {x: context.w/2, y: context.h/2};
+        this.location = {x: x, y: y};
     }
 
     //radius range = 10-30
@@ -134,4 +101,59 @@ function particle(context){
     this.r = Math.round(255);
     this.g = Math.round(Math.random()*80);
     this.b = Math.round(0);
+}
+
+function Emitter(x, y, numParticles, particleProperties, appContext){
+    this.active = true;
+    this.location = {};
+    this.location.x = x;
+    this.location.y = y;
+    this.numParticles = numParticles;
+    this.particleProperties = particleProperties;
+    this.particles = [];
+    this.appContext = appContext;
+
+    for(var i = 0; i < this.numParticles; i++){
+        this.particles.push(new particle(this.location.x, this.location.y));
+    }
+
+    var emitterX = this.location.x;
+    var emitterY = this.location.y;
+
+    this.emit = function(){
+        for(var i = 0; i < this.particles.length; i++){
+            var p = this.particles[i];
+            
+            this.appContext.ctx.beginPath();
+            
+            // changing opacity according to the life (opacity goes to 0 at the end 
+            // of life of a particle
+            p.opacity = Math.round(p.remaining_life/p.life*100)/100
+            
+            //a gradient instead of white fill
+            var gradient = this.appContext.ctx.createRadialGradient(p.location.x, p.location.y, 0, p.location.x, p.location.y, p.radius);
+            gradient.addColorStop(0, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
+            gradient.addColorStop(0.5, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
+            gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
+            
+            //this.ctx.fillStyle = gradient;
+            this.appContext.ctx.fillStyle = gradient;
+            this.appContext.ctx.arc(p.location.x, p.location.y, p.radius, Math.PI*2, false);
+            this.appContext.ctx.fill();
+            
+            p.remaining_life--;
+            p.radius--;
+            
+            // move the particles
+            p.location.x += p.speed.x;
+            p.location.y += p.speed.y;
+            
+            // regenerate particles
+            if(p.remaining_life < 0 || p.radius < 0){
+                //a brand new particle replacing the dead one
+                this.particles[i] = new particle(emitterX, emitterY);
+            }
+        }
+    }
+        
 }
