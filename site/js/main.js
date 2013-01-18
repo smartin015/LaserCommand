@@ -33,7 +33,7 @@ LaserCommand.prototype.init = function(canvas){
     this.initParticles();
     this.initRectangles();
 
-    setInterval(this.draw.bind(this), 30);
+    setInterval(this.draw.bind(this), 0);
 }
 
 LaserCommand.prototype.initParticles = function(){
@@ -62,10 +62,10 @@ LaserCommand.prototype.draw = function(){
     this.ctx.globalCompositeOperation = "lighter";
 
     // destroy any rectangles hit by the cursor, and draw the remaining
-    this.ctx.fillStyle = "#888888";
+    this.ctx.fillStyle = "#FF3333";
     for (var i = 0; i < this.rects.length; i++) {
-        if (POINTS.x > this.rects[i].x && POINTS.x < this.rects[i].x + RECT_SIZE) {
-            if (POINTS.y > this.rects[i].y && POINTS.y < this.rects[i].y + RECT_SIZE) {
+        if (POINTS.x + 5 > this.rects[i].x && POINTS.x - 5 < this.rects[i].x + RECT_SIZE) {
+            if (POINTS.y + 5 > this.rects[i].y && POINTS.y - 5 < this.rects[i].y + RECT_SIZE) {
                 this.rects.splice(i, 1);
             }
         }

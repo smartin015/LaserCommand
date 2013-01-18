@@ -25,10 +25,10 @@ function connect() {
   socket.onmessage = function (event) {
     var pts = $.parseJSON(event.data);
     if (pts["B"].length > 0) {
-        POINTS.x = pts["B"][0][0];
-        POINTS.y = pts["B"][0][1];
+        POINTS.x = pts["B"][0][0] * window.innerWidth / 1024.0;
+        POINTS.y = pts["B"][0][1] * window.innerHeight / 1024.0;
     }
-    console.log(pts);
+    //console.log(JSON.stringify(POINTS) + " from " + JSON.stringify([pts["B"][0][0], pts["B"][0][1]]));
   };
   socket.onerror = function () {
     console.log('Error');
