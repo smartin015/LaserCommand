@@ -117,8 +117,9 @@ function Emitter(x, y, numParticles, particleProperties, appContext){
         this.particles.push(new particle(this.location.x, this.location.y));
     }
 
-    var emitterX = this.location.x;
-    var emitterY = this.location.y;
+    this.setPos = function(location){
+        this.location = location;
+    }
 
     this.emit = function(){
         for(var i = 0; i < this.particles.length; i++){
@@ -151,7 +152,7 @@ function Emitter(x, y, numParticles, particleProperties, appContext){
             // regenerate particles
             if(p.remaining_life < 0 || p.radius < 0){
                 //a brand new particle replacing the dead one
-                this.particles[i] = new particle(emitterX, emitterY);
+                this.particles[i] = new particle(this.location.x, this.location.y);
             }
         }
     }
