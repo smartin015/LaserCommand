@@ -27,8 +27,6 @@ LaserCommand.prototype.init = function(canvas){
     $(document).mousemove(function(e) {
         this.mouse.x = e.pageX;
         this.mouse.y = e.pageY;
-
-        //console.log("x: " + this.mouse.x + ", y: " + this.mouse.y);
     }.bind(this));
 
     this.initParticles();
@@ -57,11 +55,6 @@ function rect() {
 }
 
 LaserCommand.prototype.draw = function(){
-    //Painting the canvas black
-    //Time for lighting magic
-    //particles are painted with "lighter"
-    //In the next frame the background is painted normally without blending to the 
-    //previous frame
     this.ctx.globalCompositeOperation = "source-over";
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.w, this.h);
@@ -83,21 +76,27 @@ LaserCommand.prototype.draw = function(){
     for(var i = 0; i < this.particles.length; i++){
         var p = this.particles[i];
         this.ctx.beginPath();
-        //changing opacity according to the life.
-        //opacity goes to 0 at the end of life of a particle
+        
+        /* changing opacity according to the life (opacity goes to 0 at the end 
+         * of life of a particle
+         */
         p.opacity = Math.round(p.remaining_life/p.life*100)/100
+        
         //a gradient instead of white fill
-        var gradient = this.ctx.createRadialGradient(p.location.x, p.location.y, 0, p.location.x, p.location.y, p.radius);
+        var gradient = this.ctx.createRadialGradient(p.location.x, p.location.y, 
+            0, p.location.x, p.location.y, p.radius);
         gradient.addColorStop(0, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
         gradient.addColorStop(0.5, "rgba("+p.r+", "+p.g+", "+p.b+", "+p.opacity+")");
         gradient.addColorStop(1, "rgba("+p.r+", "+p.g+", "+p.b+", 0)");
+        
         this.ctx.fillStyle = gradient;
         this.ctx.arc(p.location.x, p.location.y, p.radius, Math.PI*2, false);
         this.ctx.fill();
         
-        // move the particles
         p.remaining_life--;
         p.radius--;
+        
+        // move the particles
         p.location.x += p.speed.x;
         p.location.y += p.speed.y;
         
@@ -110,12 +109,11 @@ LaserCommand.prototype.draw = function(){
 }
 
 function particle(context){
-    //speed, life, location, life, colors
-    //speed.x range = -2.5 to 2.5 
-    //speed.y range = -15 to -5 to make it move upwards
+    // each particle has a speed, life, location, life, colors
+
     //lets change the Y speed to make it look like a flame
     this.speed = {x: -2.5+Math.random()*5, y: -15+Math.random()*10};
-    //location = mouse coordinates
+
     //Now the flame follows the mouse coordinates
     if(context.mouse.x && context.mouse.y){
         this.location = {x: context.mouse.x, y: context.mouse.y};
