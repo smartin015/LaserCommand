@@ -30,6 +30,7 @@ LaserCommand.prototype.init = function(canvas){
     }.bind(this));
 
     this.initParticles();
+    this.initRectangles();
 
     setInterval(this.draw.bind(this), 30);
 }
@@ -40,6 +41,8 @@ LaserCommand.prototype.initParticles = function(){
         this.particles.push(new particle(this));
     }
 }
+
+LaserComand.prototype.initRectangles
 
 LaserCommand.prototype.draw = function(){
     //Painting the canvas black
